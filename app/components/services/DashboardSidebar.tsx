@@ -1,220 +1,82 @@
 "use client";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { FaBell, FaList, FaUtensils, FaUsers, FaBoxes, FaTruck, FaChartLine, FaCog, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 
-import DashboardSidebar from "@/app/components/services/DashboardSidebar";
-import DashboardNavbar from "@/app/components/services/DashboardNavbar";
-import { Clock, Droplets, Check, DollarSign, User, Clock as ClockIcon } from "lucide-react";
+export default function DashboardSidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
 
-interface OrderStatusCard {
-  id: number;
-  title: string;
-  count: number;
-  badge: string;
-  icon: React.ReactNode;
-  iconColor: string;
-  badgeColor: string;
-  subtitle: string;
-}
+  const menu = [
+    { name: "Live Orders", icon: <FaBell />, href: "/services/dashboard" },
+    { name: "Orders", icon: <FaList />, href: "/services/dashboard/orders" },
+    { name: "Menu", icon: <FaUtensils />, href: "/services/dashboard/menu" },
+    { name: "Staff Management", icon: <FaUsers />, href: "/services/dashboard/staff" },
+    { name: "Inventory", icon: <FaBoxes />, href: "/services/dashboard/inventory" },
+    { name: "Supplier", icon: <FaTruck />, href: "/services/dashboard/supplier" },
+    { name: "Analytics", icon: <FaChartLine />, href: "/services/dashboard/analytics" },
+    { name: "Settings", icon: <FaCog />, href: "/services/dashboard/settings" },
+  ];
 
-interface OrderItem {
-  name: string;
-  quantity: number;
-  icon: string;
-}
-
-interface ActiveOrder {
-  id: string;
-  status: string;
-  statusColor: string;
-  table: string;
-  items: OrderItem[];
-  timeAgo: string;
-  customer: string;
-  price: number;
-  actions: string[];
-}
-
-const statusCards: OrderStatusCard[] = [
-  {
-    id: 1,
-    title: "5",
-    count: 5,
-    badge: "Pending",
-    icon: <Clock className="w-6 h-6" />,
-    iconColor: "text-yellow-500",
-    badgeColor: "bg-yellow-100 text-yellow-800",
-    subtitle: "Awaiting Confirmation",
-  },
-  {
-    id: 2,
-    title: "12",
-    count: 12,
-    badge: "Active",
-    icon: <Droplets className="w-6 h-6" />,
-    iconColor: "text-blue-500",
-    badgeColor: "bg-blue-100 text-blue-800",
-    subtitle: "Being Prepared",
-  },
-  {
-    id: 3,
-    title: "3",
-    count: 3,
-    badge: "Ready",
-    icon: <Check className="w-6 h-6" />,
-    iconColor: "text-green-500",
-    badgeColor: "bg-green-100 text-green-800",
-    subtitle: "Ready for Pickup",
-  },
-  {
-    id: 4,
-    title: "₹45,280",
-    count: 45280,
-    badge: "Today",
-    icon: <DollarSign className="w-6 h-6" />,
-    iconColor: "text-purple-500",
-    badgeColor: "bg-purple-100 text-purple-800",
-    subtitle: "Total Revenue",
-  },
-];
-
-const activeOrders: ActiveOrder[] = [
-  {
-    id: "ORD-1234",
-    status: "Pending",
-    statusColor: "bg-orange-100 text-orange-800 border-orange-200",
-    table: "Table 5",
-    items: [
-      { name: "Margherita Pizza", quantity: 2, icon: "🍕" },
-      { name: "Mojito", quantity: 1, icon: "🥤" },
-      { name: "Chocolate Sundae", quantity: 1, icon: "🍦" },
-    ],
-    timeAgo: "5 mins ago",
-    customer: "John Doe",
-    price: 1250,
-    actions: ["Accept", "Cancel"],
-  },
-  {
-    id: "ORD-1235",
-    status: "Preparing",
-    statusColor: "bg-blue-100 text-blue-800 border-blue-200",
-    table: "Table 12",
-    items: [
-      { name: "Classic Burger", quantity: 1, icon: "🍔" },
-      { name: "Chicken Wings", quantity: 1, icon: "🍗" },
-    ],
-    timeAgo: "12 mins ago",
-    customer: "Sarah Smith",
-    price: 850,
-    actions: ["View Details"],
-  },
-  {
-    id: "ORD-1236",
-    status: "Ready",
-    statusColor: "bg-green-100 text-green-800 border-green-200",
-    table: "Pickup",
-    items: [
-      { name: "Classic Burger", quantity: 1, icon: "🍔" },
-      { name: "Chicken Wings", quantity: 1, icon: "🍗" },
-    ],
-    timeAgo: "8 mins ago",
-    customer: "Mike Johnson",
-    price: 950,
-    actions: ["View Details"],
-  },
-];
-
-export default function LiveOrdersPage() {
-  const handleAction = (orderId: string, action: string) => {
-    console.log(`Action: ${action} for order ${orderId}`);
-    // TODO: Implement action logic (e.g., accept, cancel, view details)
-    alert(`${action} for order ${orderId}`);
+  const handleLogout = () => {
+    // Clear any auth tokens (e.g., from localStorage)
+    localStorage.removeItem("token"); // Assuming token is stored here
+    // Redirect to login page
+    router.push("/services/login");
   };
 
   return (
-    <div className="flex">
-      <DashboardSidebar />
+    <div className="w-64 bg-white h-screen shadow-md p-6 fixed flex flex-col">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+          🍽️
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">RestaurantOS</h2>
+          <p className="text-sm text-gray-500">Management Hub</p>
+        </div>
+      </div>
 
-      <main className="ml-64 p-6 w-full bg-gray-100 min-h-screen">
-        <DashboardNavbar
-          title="Live Orders"
-          subtitle="Manage incoming orders in real-time"
-        />
+      <nav className="space-y-2 flex-1">
+        {menu.map((item) => {
+          const active = pathname === item.href;
 
-        {/* Status Cards */}
-        <div className="grid grid-cols-4 gap-6 mb-8">
-          {statusCards.map((card) => (
-            <div key={card.id} className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-              <div className="flex flex-col items-center space-y-2">
-                <div className={`p-2 rounded-full ${card.iconColor} bg-white`}>
-                  {card.icon}
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${card.badgeColor}`}>
-                  {card.badge}
-                </span>
-                <div className="text-2xl font-bold text-gray-900">
-                  {card.title}
-                </div>
-                <div className="text-sm text-gray-500 text-center">{card.subtitle}</div>
-              </div>
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition
+                ${active ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+            >
+              <span className="text-xl">{item.icon}</span>
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Logout UI Section */}
+      <div className="mt-auto pt-6 border-t border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <FaUserCircle className="w-10 h-10 text-gray-400" />
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
-          ))}
-        </div>
-
-        {/* Active Orders */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="border-b border-gray-200 px-6 py-4">
-            <h3 className="text-lg font-semibold text-gray-900">Active Orders</h3>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">Guest User</p>
+              <p className="text-xs text-gray-500">Not logged in</p>
+            </div>
           </div>
-          <div className="divide-y divide-gray-200">
-            {activeOrders.map((order) => (
-              <div key={order.id} className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-gray-900">#{order.id}</span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${order.statusColor}`}>
-                      {order.status}
-                    </span>
-                    <span className="text-sm text-gray-500">{order.table}</span>
-                  </div>
-                  <span className="text-2xl font-bold text-gray-900">₹{order.price.toLocaleString()}</span>
-                </div>
-                <div className="space-y-2 mb-4">
-                  {order.items.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span>{item.icon}</span>
-                      <span>{item.quantity}x {item.name}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-sm text-gray-500">
-                    <ClockIcon className="w-4 h-4" />
-                    <span>{order.timeAgo}</span>
-                    <User className="w-4 h-4" />
-                    <span>{order.customer}</span>
-                  </div>
-                  <div className="flex space-x-2">
-                    {order.actions.map((action, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleAction(order.id, action)}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                          action === "Accept"
-                            ? "bg-green-600 text-white hover:bg-green-700"
-                            : action === "Cancel"
-                            ? "bg-red-600 text-white hover:bg-red-700"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
-                        }`}
-                      >
-                        {action === "Accept" ? "✓ Accept" : action === "Cancel" ? "✕ Cancel" : "View Details"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <button
+            onClick={handleLogout}
+            className="text-gray-500 hover:text-gray-700 p-1 rounded transition-colors"
+            title="Logout"
+          >
+            <FaSignOutAlt className="w-5 h-5" />
+          </button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
