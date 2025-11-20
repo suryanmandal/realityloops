@@ -1,1 +1,29 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+html, body, #__next { height: 100%; }
+body { background-color: #e6e7e9; }
+
+
+/* small helper to constrain content width like screenshot */
+.container-centered { max-width: 1200px; margin: 0 auto; }
+.swiper-pagination-bullet {
+  background: white !important;
+  opacity: 0.6;
+}
+.swiper-pagination-bullet-active {
+  opacity: 1;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out;
+}
+
+.input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-600;
+}
