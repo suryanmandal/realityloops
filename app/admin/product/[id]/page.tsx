@@ -81,11 +81,26 @@ export default function ProductDetail() {
         if (response.ok) {
           const data = await response.json();
           setProduct(data.data.product);
+        } else if (response.status === 401 || response.status === 403) {
+          // Unauthorized - redirect to login
+          logout();
+          router.push('/admin/login');
+          return;
         } else {
           console.error('Failed to fetch product');
         }
       } catch (error) {
         console.error('Error fetching product:', error);
+        // Check if it's an auth error (like network error due to invalid token)
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          // This might be a network error, possibly due to invalid token
+          // Try to check auth status
+          const token = localStorage.getItem('adminToken');
+          if (!token) {
+            logout();
+            router.push('/admin/login');
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -94,7 +109,7 @@ export default function ProductDetail() {
     if (productId) {
       fetchProduct();
     }
-  }, [productId]);
+  }, [productId, logout, router]);
 
   // Check AR support and show button when model is loaded
   useEffect(() => {
@@ -235,6 +250,13 @@ export default function ProductDetail() {
         body: formData,
       });
 
+      if (response.status === 401 || response.status === 403) {
+        // Unauthorized - redirect to login
+        logout();
+        router.push('/admin/login');
+        return;
+      }
+
       const result = await response.json();
 
       if (response.ok) {
@@ -249,6 +271,13 @@ export default function ProductDetail() {
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
           },
         });
+
+        if (updatedResponse.status === 401 || updatedResponse.status === 403) {
+          // Unauthorized - redirect to login
+          logout();
+          router.push('/admin/login');
+          return;
+        }
 
         if (updatedResponse.ok) {
           const updatedData = await updatedResponse.json();

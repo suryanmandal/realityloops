@@ -45,18 +45,32 @@ export default function AdminDashboard() {
         if (response.ok) {
           const data = await response.json();
           setRestaurants(data.data.restaurants || []);
+        } else if (response.status === 401 || response.status === 403) {
+          // Unauthorized - redirect to login
+          logout();
+          router.push('/admin/login');
         } else {
           console.error('Failed to fetch restaurants');
         }
       } catch (error) {
         console.error('Error fetching restaurants:', error);
+        // Check if it's an auth error (like network error due to invalid token)
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          // This might be a network error, possibly due to invalid token
+          // Try to check auth status
+          const token = localStorage.getItem('adminToken');
+          if (!token) {
+            logout();
+            router.push('/admin/login');
+          }
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchRestaurants();
-  }, []); // Empty dependency array ensures this only runs once on mount
+  }, [logout, router]); // Empty dependency array ensures this only runs once on mount
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();

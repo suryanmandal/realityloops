@@ -77,6 +77,11 @@ export default function RestaurantDetail() {
         if (restaurantResponse.ok) {
           const restaurantData = await restaurantResponse.json();
           setRestaurant(restaurantData.data.restaurant);
+        } else if (restaurantResponse.status === 401 || restaurantResponse.status === 403) {
+          // Unauthorized - redirect to login
+          logout();
+          router.push('/admin/login');
+          return;
         } else {
           console.error('Failed to fetch restaurant');
         }
@@ -91,11 +96,26 @@ export default function RestaurantDetail() {
         if (productsResponse.ok) {
           const productsData = await productsResponse.json();
           setProducts(productsData.data.products || []);
+        } else if (productsResponse.status === 401 || productsResponse.status === 403) {
+          // Unauthorized - redirect to login
+          logout();
+          router.push('/admin/login');
+          return;
         } else {
           console.error('Failed to fetch products');
         }
       } catch (error) {
         console.error('Error fetching restaurant or products:', error);
+        // Check if it's an auth error (like network error due to invalid token)
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          // This might be a network error, possibly due to invalid token
+          // Try to check auth status
+          const token = localStorage.getItem('adminToken');
+          if (!token) {
+            logout();
+            router.push('/admin/login');
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -104,7 +124,7 @@ export default function RestaurantDetail() {
     if (restaurantId) {
       fetchRestaurant();
     }
-  }, [restaurantId]);
+  }, [restaurantId, logout, router]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
