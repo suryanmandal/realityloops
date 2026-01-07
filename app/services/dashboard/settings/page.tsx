@@ -1,91 +1,224 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardSidebar from "@/app/components/services/DashboardSidebar";
 import DashboardNavbar from "@/app/components/services/DashboardNavbar";
-import { Save, Edit3, Clock, CreditCard, Smartphone, DollarSign, Wallet } from "lucide-react";
+import { Save } from "lucide-react";
 
-interface RestaurantSettings {
-  name: string;
+interface Restaurant {
+  _id: string;
+  restaurantName: string;
+  ownerName: string;
   email: string;
+  phone: string;
+  address: string;
+  role: string;
+  status: string;
+  isEmailVerified: boolean;
+  staffMembers: string[];
+  createdAt: string;
+  updatedAt: string;
+  lastLogin: string;
+}
+
+interface UpdateRestaurantData {
+  restaurantName: string;
+  ownerName: string;
   phone: string;
   address: string;
 }
 
-interface NotificationSettings {
-  newOrderAlerts: boolean;
-  lowStockAlerts: boolean;
-  emailNotifications: boolean;
-  smsNotifications: boolean;
+interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
 }
-
-interface OperatingHours {
-  mondayFriday: string;
-  saturday: string;
-  sunday: string;
-}
-
-interface PaymentMethods {
-  creditDebitCards: boolean;
-  upiPayments: boolean;
-  cashOnDelivery: boolean;
-  digitalWallets: boolean;
-}
-
-const initialRestaurantSettings: RestaurantSettings = {
-  name: "RestaurantOS",
-  email: "contact@restaurant.com",
-  phone: "+91 98765 00000",
-  address: "123 Main Street, Mumbai, Maharashtra 400001",
-};
-
-const initialNotificationSettings: NotificationSettings = {
-  newOrderAlerts: true,
-  lowStockAlerts: true,
-  emailNotifications: false,
-  smsNotifications: true,
-};
-
-const initialOperatingHours: OperatingHours = {
-  mondayFriday: "10:00 AM - 11:00 PM",
-  saturday: "10:00 AM - 12:00 AM",
-  sunday: "11:00 AM - 11:00 PM",
-};
-
-const initialPaymentMethods: PaymentMethods = {
-  creditDebitCards: true,
-  upiPayments: true,
-  cashOnDelivery: true,
-  digitalWallets: false,
-};
 
 export default function SettingsPage() {
-  const [restaurantSettings, setRestaurantSettings] = useState(initialRestaurantSettings);
-  const [notificationSettings, setNotificationSettings] = useState(initialNotificationSettings);
-  const [operatingHours, setOperatingHours] = useState(initialOperatingHours);
-  const [paymentMethods, setPaymentMethods] = useState(initialPaymentMethods);
-  const [editingHours, setEditingHours] = useState(false);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [formData, setFormData] = useState<UpdateRestaurantData>({
+    restaurantName: "",
+    ownerName: "",
+    phone: "",
+    address: ""
+  });
+  const [passwordData, setPasswordData] = useState<ChangePasswordData>({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: ""
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const handleSaveChanges = () => {
-    console.log("Saving changes:", { restaurantSettings, notificationSettings });
-    alert("Settings saved successfully!");
+  useEffect(() => {
+    const fetchRestaurantData = async () => {
+      try {
+        const token = localStorage.getItem("restaurantToken");
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/restaurant/account`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch restaurant data');
+        }
+
+        const result = await response.json();
+        const restaurantData = result.data.restaurant;
+
+        setRestaurant(restaurantData);
+        setFormData({
+          restaurantName: restaurantData.restaurantName,
+          ownerName: restaurantData.ownerName,
+          phone: restaurantData.phone,
+          address: restaurantData.address
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurantData();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const toggleNotification = (key: keyof NotificationSettings) => {
-    setNotificationSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
-  const togglePaymentMethod = (key: keyof PaymentMethods) => {
-    setPaymentMethods(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
 
-  const handleEditHours = () => {
-    setEditingHours(!editingHours);
-    if (editingHours) {
-      // Save hours logic here
-      console.log("Saving hours:", operatingHours);
+    try {
+      const token = localStorage.getItem("restaurantToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/restaurant/account`, {
+        method: "PUT",
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update restaurant data');
+      }
+
+      const result = await response.json();
+      setRestaurant(result.data.restaurant);
+      setSuccess("Restaurant information updated successfully!");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred while updating");
+      console.error(err);
+    } finally {
+      setSaving(false);
     }
   };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangingPassword(true);
+    setError(null);
+    setSuccess(null);
+
+    // Validate passwords match
+    if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+      setError("New passwords do not match");
+      setChangingPassword(false);
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setError("New password must be at least 6 characters long");
+      setChangingPassword(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("restaurantToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/restaurant/account/change-password`, {
+        method: "PUT",
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to change password');
+      }
+
+      const result = await response.json();
+      setSuccess("Password changed successfully!");
+
+      // Reset password form
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: ""
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred while changing password");
+      console.error(err);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex">
+        <DashboardSidebar />
+        <main className="ml-64 p-6 w-full bg-gray-100 min-h-screen flex items-center justify-center">
+          <div className="text-lg">Loading restaurant information...</div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !restaurant) {
+    return (
+      <div className="flex">
+        <DashboardSidebar />
+        <main className="ml-64 p-6 w-full bg-gray-100 min-h-screen flex items-center justify-center">
+          <div className="text-red-500">Error: {error || "Failed to load restaurant information"}</div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex">
@@ -94,247 +227,190 @@ export default function SettingsPage() {
       <main className="ml-64 p-6 w-full bg-gray-100 min-h-screen">
         <DashboardNavbar
           title="Settings"
-          subtitle="Manage your restaurant configuration"
+          subtitle="Manage your restaurant account information"
         />
 
-        {/* Restaurant and Notification Settings */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Clock className="w-5 h-5 mr-2" />
-              Restaurant Settings
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Restaurant Name</label>
-                <input
-                  type="text"
-                  value={restaurantSettings.name}
-                  onChange={(e) => setRestaurantSettings(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
-                <input
-                  type="email"
-                  value={restaurantSettings.email}
-                  onChange={(e) => setRestaurantSettings(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input
-                  type="tel"
-                  value={restaurantSettings.phone}
-                  onChange={(e) => setRestaurantSettings(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                <textarea
-                  value={restaurantSettings.address}
-                  onChange={(e) => setRestaurantSettings(prev => ({ ...prev, address: e.target.value }))}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <button
-                onClick={handleSaveChanges}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save Changes</span>
-              </button>
-            </div>
-          </div>
+        <div className="bg-white rounded-lg shadow-sm p-6 max-w-4xl">
+          <h3 className="text-lg font-semibold mb-6">Restaurant Account Information</h3>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-4">Notification Settings</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-md">
-                <div>
-                  <h4 className="font-medium text-blue-900">New Order Alerts</h4>
-                  <p className="text-sm text-blue-700">Get notified for new orders</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={notificationSettings.newOrderAlerts}
-                    onChange={() => toggleNotification("newOrderAlerts")}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-md">
-                <div>
-                  <h4 className="font-medium text-green-900">Low Stock Alerts</h4>
-                  <p className="text-sm text-green-700">Alert when inventory is low</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={notificationSettings.lowStockAlerts}
-                    onChange={() => toggleNotification("lowStockAlerts")}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                <div>
-                  <h4 className="font-medium text-gray-900">Email Notifications</h4>
-                  <p className="text-sm text-gray-700">Receive email updates</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={notificationSettings.emailNotifications}
-                    onChange={() => toggleNotification("emailNotifications")}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-600"></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-md">
-                <div>
-                  <h4 className="font-medium text-red-900">SMS Notifications</h4>
-                  <p className="text-sm text-red-700">Receive SMS alerts</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={notificationSettings.smsNotifications}
-                    onChange={() => toggleNotification("smsNotifications")}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-                </label>
-              </div>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+              {error}
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Operating Hours and Payment Methods */}
-        <div className="grid grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Clock className="w-5 h-5 mr-2" />
-              Operating Hours
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="text-sm font-medium text-gray-700">Monday - Friday</span>
-                <span className="text-sm text-gray-500">{operatingHours.mondayFriday}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="text-sm font-medium text-gray-700">Saturday</span>
-                <span className="text-sm text-gray-500">{operatingHours.saturday}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="text-sm font-medium text-gray-700">Sunday</span>
-                <span className="text-sm text-gray-500">{operatingHours.sunday}</span>
-              </div>
-              <button
-                onClick={handleEditHours}
-                className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2 mt-4"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>{editingHours ? "Save Hours" : "Edit Hours"}</span>
-              </button>
+          {success && (
+            <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
+              {success}
             </div>
-          </div>
+          )}
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <CreditCard className="w-5 h-5 mr-2" />
-              Payment Methods
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-md">
-                <div className="flex items-center space-x-3">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <h4 className="font-medium text-gray-900">Credit/Debit Cards</h4>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+          <div className="space-y-8">
+            {/* Restaurant Information Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <h4 className="text-md font-medium text-gray-900">Restaurant Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Restaurant Name</label>
                   <input
-                    type="checkbox"
-                    checked={paymentMethods.creditDebitCards}
-                    onChange={() => togglePaymentMethod("creditDebitCards")}
-                    className="sr-only peer"
+                    type="text"
+                    name="restaurantName"
+                    value={formData.restaurantName}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-                <span className={`ml-2 px-2 py-1 text-xs rounded-full ${paymentMethods.creditDebitCards ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {paymentMethods.creditDebitCards ? 'Enabled' : 'Disabled'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-md">
-                <div className="flex items-center space-x-3">
-                  <Smartphone className="w-5 h-5 text-purple-600" />
-                  <div>
-                    <h4 className="font-medium text-gray-900">UPI Payments</h4>
-                  </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name</label>
                   <input
-                    type="checkbox"
-                    checked={paymentMethods.upiPayments}
-                    onChange={() => togglePaymentMethod("upiPayments")}
-                    className="sr-only peer"
+                    type="text"
+                    name="ownerName"
+                    value={formData.ownerName}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                </label>
-                <span className={`ml-2 px-2 py-1 text-xs rounded-full ${paymentMethods.upiPayments ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {paymentMethods.upiPayments ? 'Enabled' : 'Disabled'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-md">
-                <div className="flex items-center space-x-3">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  <div>
-                    <h4 className="font-medium text-gray-900">Cash on Delivery</h4>
-                  </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                   <input
-                    type="checkbox"
-                    checked={paymentMethods.cashOnDelivery}
-                    onChange={() => togglePaymentMethod("cashOnDelivery")}
-                    className="sr-only peer"
+                    type="email"
+                    value={restaurant.email}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                </label>
-                <span className={`ml-2 px-2 py-1 text-xs rounded-full ${paymentMethods.cashOnDelivery ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {paymentMethods.cashOnDelivery ? 'Enabled' : 'Disabled'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-md">
-                <div className="flex items-center space-x-3">
-                  <Wallet className="w-5 h-5 text-orange-600" />
-                  <div>
-                    <h4 className="font-medium text-gray-900">Digital Wallets</h4>
-                  </div>
+                  <p className="mt-1 text-sm text-gray-500">Email cannot be changed</p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                   <input
-                    type="checkbox"
-                    checked={paymentMethods.digitalWallets}
-                    onChange={() => togglePaymentMethod("digitalWallets")}
-                    className="sr-only peer"
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
-                </label>
-                <span className={`ml-2 px-2 py-1 text-xs rounded-full ${paymentMethods.digitalWallets ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {paymentMethods.digitalWallets ? 'Enabled' : 'Disabled'}
-                </span>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
-            </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <input
+                    type="text"
+                    value={restaurant.status}
+                    disabled
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed ${restaurant.status === 'active' ? 'text-green-600' : 'text-red-600'}`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Verified</label>
+                  <input
+                    type="text"
+                    value={restaurant.isEmailVerified ? 'Yes' : 'No'}
+                    disabled
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed ${restaurant.isEmailVerified ? 'text-green-600' : 'text-red-600'}`}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
+                >
+                  {saving ? (
+                    <>
+                      <div className="w-4 h-4 border-t-2 border-white border-solid rounded-full animate-spin"></div>
+                      <span>Updating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Save Changes</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {/* Change Password Form */}
+            <form onSubmit={handlePasswordSubmit} className="space-y-6 pt-6 border-t border-gray-200">
+              <h4 className="text-md font-medium text-gray-900">Change Password</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    required
+                    minLength={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    name="confirmNewPassword"
+                    value={passwordData.confirmNewPassword}
+                    onChange={handlePasswordChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
+                >
+                  {changingPassword ? (
+                    <>
+                      <div className="w-4 h-4 border-t-2 border-white border-solid rounded-full animate-spin"></div>
+                      <span>Changing Password...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Change Password</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </main>

@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FaBell, FaList, FaUtensils, FaUsers, FaBoxes, FaTruck, FaChartLine, FaCog, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
@@ -6,6 +7,7 @@ import { FaBell, FaList, FaUtensils, FaUsers, FaBoxes, FaTruck, FaChartLine, FaC
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [restaurantName, setRestaurantName] = useState("Loading...");
 
   const menu = [
     { name: "Dashboard", icon: <FaBell />, href: "/services/dashboard" },
@@ -13,6 +15,37 @@ export default function DashboardSidebar() {
     { name: "Products", icon: <FaUtensils />, href: "/services/dashboard/products" },
     { name: "Settings", icon: <FaCog />, href: "/services/dashboard/settings" },
   ];
+
+  useEffect(() => {
+    const fetchRestaurantName = async () => {
+      try {
+        const token = localStorage.getItem("restaurantToken");
+        if (!token) {
+          // If no token, user is not logged in, so we can't fetch restaurant info
+          setRestaurantName("Guest User");
+          return;
+        }
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/restaurant/account`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setRestaurantName(result.data.restaurant.restaurantName);
+        } else {
+          setRestaurantName("Unknown Restaurant");
+        }
+      } catch (error) {
+        console.error("Error fetching restaurant name:", error);
+        setRestaurantName("Error loading");
+      }
+    };
+
+    fetchRestaurantName();
+  }, []);
 
   const handleLogout = () => {
     // Clear auth tokens from localStorage
@@ -63,8 +96,8 @@ export default function DashboardSidebar() {
               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">Guest User</p>
-              <p className="text-xs text-gray-500">Not logged in</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{restaurantName}</p>
+              <p className="text-xs text-gray-500">Restaurant</p>
             </div>
           </div>
           <button
