@@ -8,21 +8,20 @@ export default function DashboardSidebar() {
   const router = useRouter();
 
   const menu = [
-    { name: "Live Orders", icon: <FaBell />, href: "/services/dashboard" },
-    { name: "Orders", icon: <FaList />, href: "/services/dashboard/orders" },
-    { name: "Menu", icon: <FaUtensils />, href: "/services/dashboard/menu" },
-    { name: "Staff Management", icon: <FaUsers />, href: "/services/dashboard/staff" },
-    { name: "Inventory", icon: <FaBoxes />, href: "/services/dashboard/inventory" },
-    { name: "Supplier", icon: <FaTruck />, href: "/services/dashboard/supplier" },
-    { name: "Analytics", icon: <FaChartLine />, href: "/services/dashboard/analytics" },
+    { name: "Dashboard", icon: <FaBell />, href: "/services/dashboard" },
+    { name: "Category", icon: <FaList />, href: "/services/dashboard/category" },
+    { name: "Products", icon: <FaUtensils />, href: "/services/dashboard/products" },
     { name: "Settings", icon: <FaCog />, href: "/services/dashboard/settings" },
   ];
 
   const handleLogout = () => {
-    // Clear any auth tokens (e.g., from localStorage)
-    localStorage.removeItem("token"); // Assuming token is stored here
-    // Redirect to login page
-    router.push("/services/login");
+    // Clear auth tokens from localStorage
+    localStorage.removeItem("restaurantToken");
+    localStorage.removeItem("restaurantRefreshToken");
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminRefreshToken");
+    // Redirect to restaurant login page
+    router.push("/services/dashboard/login");
   };
 
   return (
