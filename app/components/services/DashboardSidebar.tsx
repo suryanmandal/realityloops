@@ -13,6 +13,8 @@ export default function DashboardSidebar() {
     { name: "Dashboard", icon: <FaBell />, href: "/services/dashboard" },
     { name: "Category", icon: <FaList />, href: "/services/dashboard/category" },
     { name: "Products", icon: <FaUtensils />, href: "/services/dashboard/products" },
+    // { name: "Orders", icon: <FaList />, href: "/services/dashboard/orders" },
+    // { name: "Staff", icon: <FaUsers />, href: "/services/dashboard/staff" },
     { name: "Settings", icon: <FaCog />, href: "/services/dashboard/settings" },
   ];
 
