@@ -1,5 +1,6 @@
 
 import type { Metadata } from "next";
+import ClientProviders from "@/context/client-providers";
 // @ts-ignore
 import "./globals.css";
 
@@ -15,7 +16,11 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <body className="bg-[#e6e7e9] text-gray-900">{children}</body>
+            <body className="bg-[#e6e7e9] text-gray-900">
+                <ClientProviders>
+                    {children}
+                </ClientProviders>
+            </body>
         </html>
     );
 }
