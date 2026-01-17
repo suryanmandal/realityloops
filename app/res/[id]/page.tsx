@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
 import PublicNavbar from "@/app/components/PublicNavbar";
 import Footer from "@/app/components/Footer";
 import { Search, Filter, X, ChevronDown } from "lucide-react";
-import router from "next/router";
+import { useRouter, useParams } from "next/navigation";
+import ModelViewer from "@/components/Model3DViewer";
 
 interface Category {
   _id: string;
@@ -43,9 +43,11 @@ interface Restaurant {
   phone: string;
   email: string;
   image: string;
+  arModelPath: string;
 }
 
 export default function RestaurantPage() {
+  const router = useRouter();
   const { id } = useParams();
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -414,10 +416,25 @@ export default function RestaurantPage() {
               className="min-w-[280px] sm:min-w-0 bg-white rounded-xl shadow-md hover:shadow-xl cursor-pointer overflow-hidden"
             >
               {" "}
-              <img
+              {/* <img
                 src={product.image}
                 className="h-44 w-full object-cover"
-              />{" "}
+              />{" "} */}
+              <div className="relative h-44 w-full bg-gray-100">
+                {product.arModelPath ? (
+                  <ModelViewer
+                    src={product.arModelPath}
+                    poster={product.image}
+                    alt={product.title}
+                  />
+                ) : (
+                  <img
+                    src={product.image}
+                    className="h-44 w-full object-cover rounded-t-xl"
+                    alt={product.title}
+                  />
+                )}
+              </div>
               <div className="p-4">
                 {" "}
                 <h3 className="font-bold">{product.title}</h3>{" "}
@@ -437,10 +454,26 @@ export default function RestaurantPage() {
           <div className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl overflow-hidden">
             {/* Header */}
             <div className="relative">
-              <img
-                src={selectedProduct.image}
+              {/* <img
+                src={ selectedProduct.image}
                 className="h-40 w-full object-cover"
-              />
+              /> */}
+              <div className="relative h-[320px] sm:h-[260px] bg-gray-100">
+                {selectedProduct.arModelPath ? (
+                  <ModelViewer
+                    src={selectedProduct.arModelPath}
+                    poster={selectedProduct.image}
+                    alt={selectedProduct.title}
+                  />
+                ) : (
+                  <img
+                    src={selectedProduct.image}
+                    className="w-full h-full object-cover"
+                    alt={selectedProduct.title}
+                  />
+                )}
+              </div>
+
               <button
                 onClick={() => setShowModal(false)}
                 className="absolute top-3 right-3 bg-black/70 text-white rounded-full h-9 w-9"

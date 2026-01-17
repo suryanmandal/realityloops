@@ -5,9 +5,11 @@ import { useEffect, useRef, useState } from 'react';
 interface Model3DViewerProps {
     src: string;
     alt: string;
+    poster?: string;
+    
 }
 
-const Model3DViewer = ({ src, alt }: Model3DViewerProps) => {
+const Model3DViewer = ({ src, alt,poster }: Model3DViewerProps) => {
     const [isMounted, setIsMounted] = useState(false);
     const arButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -65,6 +67,7 @@ const Model3DViewer = ({ src, alt }: Model3DViewerProps) => {
             <model-viewer
                 src={src}
                 alt={alt}
+                poster={poster}
                 shadow-intensity="1"
                 camera-controls
                 auto-rotate
