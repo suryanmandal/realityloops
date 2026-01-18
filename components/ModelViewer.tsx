@@ -7,6 +7,7 @@ interface ModelViewerProps {
     title: string;
     price: number;
     description: string;
+   
 }
 
 const ModelViewerComponent = ({ src, title, price, description }: ModelViewerProps) => {
