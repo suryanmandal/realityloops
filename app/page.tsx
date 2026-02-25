@@ -1,364 +1,185 @@
 "use client";
+import React, { useState, useEffect } from 'react';
+import { Box, Store, ShoppingBag, LayoutTemplate, ArrowRight, Code, Zap, Smartphone, Cuboid } from 'lucide-react';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import PublicNavbar from "./components/PublicNavbar";
-import Footer from "./components/Footer";
-import { ArrowRight, Sparkles } from "lucide-react";
-
-interface Restaurant {
-  _id: string;
-  restaurantName: string;
-  ownerName: string;
-  email: string;
-  phone: string;
-  address: string;
-  status: string;
-}
-
-export default function HomePage() {
-  const router = useRouter();
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [loading, setLoading] = useState(true);
+const HomePage = () => {
+  // Carousel State Logic
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const useCases = [
+    {
+      id: 0,
+      title: "Furniture",
+      desc: "Let customers place sofas in their living room.",
+      video: "https://www.w3schools.com/html/mov_bbb.mp4", // Replace with your AR Furniture video
+    },
+    {
+      id: 1,
+      title: "Fashion",
+      desc: "Virtual Try-On for glasses and earrings.",
+      video: "https://www.w3schools.com/html/mov_bbb.mp4", // Replace with your VTO video
+    },
+    {
+      id: 2,
+      title: "Food",
+      desc: "3D Menus that make guests hungry.",
+      video: "https://www.w3schools.com/html/mov_bbb.mp4", // Replace with your 3D Menu video
+    }
+  ];
 
   useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API}/api/v1/public/restaurants?limit=20`
-        );
-        const data = await response.json();
-        if (data.success) {
-          setRestaurants(data.data.restaurants);
-        }
-      } catch (error) {
-        console.error("Error fetching restaurants:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRestaurants();
-  }, []);
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev === useCases.length - 1 ? 0 : prev + 1));
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [useCases.length]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Navbar */}
-      <div className="sticky top-0 z-50 bg-white shadow-sm">
-        <PublicNavbar />
-      </div>
+    <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-cyan-500/30">
+      
+      {/* Navbar Placeholder */}
+      <nav className="flex justify-between items-center p-6 lg:px-12 border-b border-white/10 bg-slate-950/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="text-xl font-bold tracking-tighter flex items-center gap-2">
+          <Cuboid className="text-cyan-400" />
+          Reality Loops
+        </div>
+        <button className="px-5 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-full transition-all">
+          Sign In
+        </button>
+      </nav>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 py-16 md:py-24">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-            <Sparkles className="w-4 h-4" />
-            Experience Food in Augmented Reality
+      {/* 1. Hero Section */}
+      <section className="relative pt-24 pb-32 px-6 lg:px-12 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+        <div className="flex-1 space-y-8 z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium">
+            <Zap size={16} /> Beta Launch
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Connecting Restaurants & Customers
-            <br />
-            Through <span className="text-indigo-600">3D Food Models</span>
+          <h1 className="text-5xl lg:text-7xl font-bold tracking-tight leading-[1.1]">
+            The Operating System for <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">Immersive Commerce.</span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            See your food before you order. Experience restaurant menus in stunning 3D
-            and augmented reality. The future of dining is here.
+          <p className="text-lg text-slate-400 max-w-xl leading-relaxed">
+            Turn visitors into buyers. Whether you have a website or need one, launch 3D and AR experiences in minutes—modularly.
           </p>
-          <button
-            onClick={() => {
-              const restaurantsSection = document.getElementById("restaurants");
-              restaurantsSection?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
-            Explore Restaurants
-            <ArrowRight className="w-5 h-5" />
+          <div className="flex flex-wrap gap-4">
+            <button className="px-8 py-4 bg-white text-slate-950 rounded-full font-semibold hover:bg-slate-200 transition-all flex items-center gap-2">
+              Start for Free <ArrowRight size={18} />
+            </button>
+            <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-full font-semibold hover:bg-white/10 transition-all">
+              View Demo
+            </button>
+          </div>
+        </div>
+        
+        {/* 3D Model Viewer Integration */}
+        <div className="flex-1 w-full h-[500px] relative rounded-3xl overflow-hidden bg-gradient-to-tr from-purple-900/20 to-cyan-900/20 border border-white/10">
+        {/* @ts-ignore*/}
+          <model-viewer
+            src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" // Replace with your 3D Sneaker .glb
+            auto-rotate
+            camera-controls
+            ar
+            shadow-intensity="1"
+            style={{ width: '100%', height: '100%', backgroundColor: 'transparent' }}
+          />
+        </div>
+      </section>
+
+      {/* 2. How It Works (The Core Apps) */}
+      <section className="py-24 px-6 lg:px-12 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-5xl font-bold mb-4">Install only what you need.</h2>
+            <p className="text-slate-400">Don't pay for bloatware. Modular apps built for your specific business.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { icon: <Code className="text-cyan-400" size={32}/>, title: "The Connector", desc: "For Shopify & WooCommerce users." },
+              { icon: <Store className="text-purple-400" size={32}/>, title: "Instant Store", desc: "For Instagram & WhatsApp sellers." },
+              { icon: <Smartphone className="text-pink-400" size={32}/>, title: "Face Try-On", desc: "For eyewear & jewelry brands." },
+              { icon: <LayoutTemplate className="text-emerald-400" size={32}/>, title: "Room Planner", desc: "For furniture & decor placement." }
+            ].map((app, idx) => (
+              <div key={idx} className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all cursor-pointer group">
+                <div className="mb-6 p-4 rounded-2xl bg-white/5 inline-block group-hover:scale-110 transition-transform">{app.icon}</div>
+                <h3 className="text-xl font-semibold mb-2">{app.title}</h3>
+                <p className="text-slate-400 text-sm">{app.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. The Two Paths */}
+      <section className="py-0 flex flex-col lg:flex-row min-h-[60vh]">
+        {/* Left Side */}
+        <div className="flex-1 p-12 lg:p-24 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-white/10 bg-gradient-to-br from-slate-950 to-slate-900 hover:from-slate-900 hover:to-cyan-950/20 transition-colors">
+          <Code size={48} className="text-cyan-400 mb-8" />
+          <h2 className="text-3xl font-bold mb-4">I have a website.</h2>
+          <p className="text-xl text-slate-400 mb-8">Seamless Integration. Copy one line of code to add AR to your existing Shopify or Custom site.</p>
+          <button className="text-cyan-400 font-semibold flex items-center gap-2 hover:gap-4 transition-all w-fit">
+            Get the Snippet <ArrowRight size={20} />
           </button>
         </div>
+        
+        {/* Right Side */}
+        <div className="flex-1 p-12 lg:p-24 flex flex-col justify-center bg-gradient-to-bl from-slate-950 to-slate-900 hover:from-slate-900 hover:to-purple-950/20 transition-colors">
+          <ShoppingBag size={48} className="text-purple-400 mb-8" />
+          <h2 className="text-3xl font-bold mb-4">I need a store.</h2>
+          <p className="text-xl text-slate-400 mb-8">Instant Launch. No website? No problem. Create a 3D-first storefront in under 5 minutes.</p>
+          <button className="text-purple-400 font-semibold flex items-center gap-2 hover:gap-4 transition-all w-fit">
+            Build Store <ArrowRight size={20} />
+          </button>
+        </div>
+      </section>
 
-        {/* Hero Image Placeholder */}
-        <div className="relative max-w-5xl mx-auto">
-          <div className="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="aspect-video flex items-center justify-center p-8">
-              <div className="text-center">
-                <div className="w-32 h-32 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-lg">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-16 w-16 text-indigo-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                    />
-                  </svg>
-                </div>
-                <p className="text-2xl font-bold text-gray-700">
-                  3D Food Experience Preview
-                </p>
-                <p className="text-gray-500 mt-2">Image Coming Soon</p>
-              </div>
-            </div>
+      {/* 4. Industry Use Cases (Carousel) */}
+      <section className="py-24 px-6 lg:px-12 max-w-7xl mx-auto">
+        <h2 className="text-3xl lg:text-5xl font-bold text-center mb-16">Built for your industry.</h2>
+        
+        <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-white/10 aspect-video flex items-center justify-center">
+          {/* Background Video Layer */}
+          <video 
+            key={useCases[currentSlide].id}
+            autoPlay 
+            loop 
+            muted 
+            className="absolute inset-0 w-full h-full object-cover opacity-40"
+          >
+            <source src={useCases[currentSlide].video} type="video/mp4" />
+          </video>
+          
+          {/* Overlay Content */}
+          <div className="relative z-10 text-center p-8 max-w-2xl backdrop-blur-sm bg-slate-950/30 rounded-3xl border border-white/10">
+            <h3 className="text-4xl font-bold mb-4">{useCases[currentSlide].title}</h3>
+            <p className="text-2xl text-slate-300">{useCases[currentSlide].desc}</p>
+          </div>
+
+          {/* Carousel Indicators */}
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3 z-10">
+            {useCases.map((_, idx) => (
+              <button 
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`h-2 rounded-full transition-all ${currentSlide === idx ? 'w-8 bg-cyan-400' : 'w-2 bg-white/30'}`}
+              />
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Restaurants Section */}
-      <section id="restaurants" className="max-w-7xl mx-auto px-4 py-16">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Featured Restaurants
-            </h2>
-            <p className="text-gray-600">
-              Discover amazing restaurants with 3D menus
-            </p>
-          </div>
+      {/* 5. Trust & Tech Footer */}
+      <footer className="py-12 border-t border-white/10 bg-slate-950 text-center flex flex-col md:flex-row justify-center items-center gap-8 lg:gap-24 px-6 text-slate-400 text-sm font-medium">
+        <div className="flex items-center gap-3">
+          <Smartphone className="text-slate-500" />
+          Powered by WebAR – No App Download Required
         </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          </div>
-        ) : restaurants.length > 0 ? (
-          <div className="relative">
-            <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
-              {restaurants.map((restaurant) => (
-                <div
-                  key={restaurant._id}
-                  onClick={() => router.push(`/res/${restaurant._id}`)}
-                  className="flex-shrink-0 w-80 snap-start cursor-pointer group"
-                >
-                  <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 transform group-hover:scale-105">
-                    {/* Restaurant Image Placeholder */}
-                    <div className="h-48 bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-200 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="w-20 h-20 mx-auto mb-3 bg-white rounded-full flex items-center justify-center shadow-lg">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-10 w-10 text-indigo-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Restaurant Info */}
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
-                        {restaurant.restaurantName}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-1">
-                        Owner: {restaurant.ownerName}
-                      </p>
-                      <p className="text-sm text-gray-500 mb-3 line-clamp-2">
-                        {restaurant.address}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            restaurant.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {restaurant.status}
-                        </span>
-                        <ArrowRight className="w-5 h-5 text-indigo-600 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-12 text-gray-500">
-            No restaurants available at the moment
-          </div>
-        )}
-      </section>
-
-      {/* About Section */}
-      <section className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              About Reality<span className="text-indigo-600">Loops</span>
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              We're revolutionizing the dining experience by bringing restaurant
-              menus to life with cutting-edge 3D and AR technology.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8 text-indigo-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                See Before You Order
-              </h3>
-              <p className="text-gray-600">
-                View realistic 3D models of dishes from every angle before making
-                your choice.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8 text-purple-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                AR Experience
-              </h3>
-              <p className="text-gray-600">
-                Place food items on your table using augmented reality technology.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto mb-4 bg-pink-100 rounded-full flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8 text-pink-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Instant & Interactive
-              </h3>
-              <p className="text-gray-600">
-                Browse menus quickly with interactive 3D models that load instantly.
-              </p>
-            </div>
-          </div>
+        <div className="flex items-center gap-3">
+          <Box className="text-slate-500" />
+          Universal 3D CMS – Upload once, deploy everywhere
         </div>
-      </section>
-
-      <Footer />
-
-      <style jsx global>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+      </footer>
     </div>
   );
-}
+};
 
-// const sampleCards = new Array(8).fill(0).map((_, i) => ({
-//   id: i,
-//   title: "Setup & Manage Facebook Ads",
-//   author: "Alex Johnson",
-//   price: "From ₹11,000",
-//   rating: 4.7,
-//   image: "/vrSet.jfif",
-// }));
-
-// export default function HomePage() {
-//   return (
-//     <div className="min-h-screen">
-     
-//       <div className="fixed top-0 left-0 w-full z-50 bg-white shadow-sm">
-//         <Navbar />
-//         <TopNav />
-//       </div>
-
-      
-//       <main className="max-w-[1400px] mx-auto py-6 pt-36 flex gap-4 sm:gap-6 px-2 sm:px-4">
-        
-//         <aside className="hidden md:block w-1/4 sticky top-36 self-start h-[calc(100vh-9rem)] overflow-y-auto bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-sm">
-//           <Filters />
-//         </aside>
-
-//         {/* Main Content */}
-//         <div className="flex-1">
-//           <Hero />
-//           <Section title="AR/VR Platforms">
-//             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-//               {sampleCards.map((c) => (
-//                 <Card key={c.id} {...c} />
-//               ))}
-//             </div>
-//           </Section>
-
-//           <Section title="XR Development Engines">
-//             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-//               {sampleCards.map((c) => (
-//                 <Card key={"eng" + c.id} {...c} />
-//               ))}
-//             </div>
-//           </Section>
-
-//           <div className="my-12 border border-dashed border-gray-300 bg-white py-12 text-center text-xl text-indigo-400">
-//             ADVERTISEMENT
-//           </div>
-//         </div>
-//       </main>
-
-//       <Footer />
-//     </div>
-//   );
-// }
+export default HomePage;
