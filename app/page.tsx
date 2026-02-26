@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 /* ── TYPES ── */
 interface FAQItem {
@@ -577,7 +578,7 @@ function Verticals() {
       </div>
       <div className="verticals-grid">
         {/* Food */}
-        <div className="vertical-card reveal">
+        <Link href="/restaurant" className="vertical-card reveal">
           <div className="vertical-bg" />
           <div className="vertical-blob" />
           <div className="vertical-card-inner">
@@ -586,7 +587,7 @@ function Verticals() {
             <div className="vertical-desc">Give every dish a 360° presence. Customers explore your menu spatially before they order — boosting confidence and conversion.</div>
           </div>
           <div className="vertical-cta">↗</div>
-        </div>
+        </Link>
         {/* Furniture */}
         <div className="vertical-card reveal reveal-delay-1">
           <div className="vertical-bg" />
