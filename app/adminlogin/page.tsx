@@ -1,0 +1,124 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context";
+import { ShieldCheck, Mail, Lock, ArrowRight } from "lucide-react";
+
+export default function AdminLoginPage() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+    const { login } = useAuth();
+    const router = useRouter();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError("");
+
+        try {
+            const result = await login(email, password);
+
+            if (result.success) {
+                router.push('/admin/dashboard');
+                router.refresh();
+            } else {
+                setError(result.message);
+            }
+        } catch (err) {
+            setError("An error occurred during login");
+            console.error("Login error:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            {/* Background elements */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-950/20 via-slate-950 to-slate-950 z-0" />
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+
+            <div className="max-w-md w-full space-y-8 z-10">
+                <div className="text-center">
+                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-4">
+                        <ShieldCheck className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-4xl font-extrabold text-white tracking-tight">
+                        Admin Access
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-400">
+                        Sign in to the system management console
+                    </p>
+                </div>
+
+                <div className="bg-slate-900/80 backdrop-blur-md p-8 rounded-3xl border border-slate-800/80 shadow-2xl">
+                    {error && (
+                        <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-sm font-medium">
+                            {error}
+                        </div>
+                    )}
+
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                                Email Address
+                            </label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                <input
+                                    id="email"
+                                    type="email"
+                                    required
+                                    placeholder="admin@realityloops.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="block w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-700"
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                <input
+                                    id="password"
+                                    type="password"
+                                    required
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="block w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-700"
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                                {isLoading ? (
+                                    <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white" />
+                                ) : (
+                                    <>
+                                        Sign In
+                                        <ArrowRight className="w-4 h-4" />
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+}
