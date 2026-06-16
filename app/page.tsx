@@ -152,7 +152,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);o
 /* HEADER */
 header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,0.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--ink-10);transition:all 0.3s;}
 .header-contact-bar{display:flex;align-items:center;justify-content:flex-end;gap:24px;padding:7px 48px;background:var(--ink);border-bottom:1px solid rgba(255,255,255,0.06);}
-.header-contact-bar a{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.06em;text-decoration:none;display:flex;align-items:center;gap:6px;transition:opacity 0.2s;}
+.header-contact-bar a{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.06em;text-decoration:none;display:flex;align-items:center;gap:6px;transition:opacity 0.2s;white-space:nowrap;}
 .header-contact-bar a:hover{opacity:0.75;}
 .contact-phone{color:rgba(255,255,255,0.6);}
 .contact-email{color:var(--teal)!important;background:rgba(0,194,168,0.1);border:1px solid rgba(0,194,168,0.25);padding:3px 12px;border-radius:2px;}
