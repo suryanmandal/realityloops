@@ -82,13 +82,13 @@ export default function AnalyticsPage() {
     <div className="flex">
       <DashboardSidebar />
 
-      <main className="ml-64 p-6 w-full bg-gray-100 min-h-screen">
+      <main className="lg:ml-64 ml-0 p-4 lg:p-6 w-full bg-gray-100 min-h-screen">
         <DashboardNavbar
           title="Analytics"
           subtitle="View your restaurant performance metrics"
         />
 
-        <div className="grid grid-cols-4 gap-6 mb-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 mt-6">
           {metrics.map((metric) => (
             <div key={metric.id} className={`bg-white rounded-lg shadow-sm p-6 ${metric.bgColor}`}>
               <div className="flex items-center justify-between mb-4">
@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold mb-4">Revenue Trend</h3>
             <ResponsiveContainer width="100%" height={300}>

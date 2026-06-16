@@ -24,9 +24,22 @@ export default function HomePage() {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API}/api/v1/public/restaurants?limit=20`
-        );
+        const base = process.env.NEXT_PUBLIC_API || "https://api.realityloops.in";
+        let response;
+        try {
+          response = await fetch(
+            `${base}/api/v1/public/restaurants?limit=20`
+          );
+        } catch (netErr) {
+          if (base !== "https://api.realityloops.in") {
+            console.warn("Local backend offline. Falling back to production API.");
+            response = await fetch(
+              "https://api.realityloops.in/api/v1/public/restaurants?limit=20"
+            );
+          } else {
+            throw netErr;
+          }
+        }
         const data = await response.json();
         if (data.success) {
           setRestaurants(data.data.restaurants);

@@ -119,7 +119,7 @@ export default function DashboardPage() {
       <ProtectedRoute>
         <div className="flex bg-[#fcfcfd] min-h-screen">
           <DashboardSidebar />
-          <main className="ml-64 p-8 w-full flex items-center justify-center">
+          <main className="lg:ml-64 ml-0 p-4 lg:p-8 w-full flex items-center justify-center">
             <div className="flex flex-col items-center space-y-4">
               <div className="w-10 h-10 border-t-2 border-slate-900 border-solid rounded-full animate-spin"></div>
               <p className="text-slate-500 font-medium text-sm tracking-wide">Loading workspace...</p>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
       <ProtectedRoute>
         <div className="flex bg-[#fcfcfd] min-h-screen">
           <DashboardSidebar />
-          <main className="ml-64 p-8 w-full flex items-center justify-center">
+          <main className="lg:ml-64 ml-0 p-4 lg:p-8 w-full flex items-center justify-center">
             <div className="bg-red-50/50 border border-red-100 rounded-2xl p-6 max-w-md text-center">
               <span className="text-2xl mb-2 block">⚠️</span>
               <h3 className="font-semibold text-red-900">Failed to load dashboard</h3>
@@ -200,7 +200,7 @@ export default function DashboardPage() {
       <div className="flex bg-[#f8f9fa] min-h-screen">
         <DashboardSidebar />
 
-        <main className="ml-64 p-8 w-full max-w-[1400px]">
+        <main className="lg:ml-64 ml-0 p-4 lg:p-8 w-full max-w-[1400px]">
           <DashboardNavbar
             title="Dashboard Overview"
             subtitle={`Welcome back, ${restaurant.ownerName}`}

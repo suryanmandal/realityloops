@@ -106,7 +106,7 @@ export default function ProductDetailPage() {
         return (
             <div className="flex">
                 <DashboardSidebar />
-                <main className="ml-64 p-6 w-full bg-gray-100 min-h-screen flex items-center justify-center">
+                <main className="lg:ml-64 ml-0 p-4 lg:p-6 w-full bg-gray-100 min-h-screen flex items-center justify-center">
                     <div className="text-lg">Loading product...</div>
                 </main>
             </div>
@@ -117,7 +117,7 @@ export default function ProductDetailPage() {
         return (
             <div className="flex">
                 <DashboardSidebar />
-                <main className="ml-64 p-6 w-full bg-gray-100 min-h-screen flex items-center justify-center">
+                <main className="lg:ml-64 ml-0 p-4 lg:p-6 w-full bg-gray-100 min-h-screen flex items-center justify-center">
                     <div className="text-red-500">Error: {error || "Product not found"}</div>
                 </main>
             </div>
@@ -128,7 +128,7 @@ export default function ProductDetailPage() {
         <div className="flex">
             <DashboardSidebar />
 
-            <main className="ml-64 p-6 w-full bg-gray-100 min-h-screen">
+            <main className="lg:ml-64 ml-0 p-4 lg:p-6 w-full bg-gray-100 min-h-screen">
                 <DashboardNavbar
                     title={product.title}
                     subtitle="Product details"

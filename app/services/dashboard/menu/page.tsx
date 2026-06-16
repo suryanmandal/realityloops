@@ -96,7 +96,7 @@ export default function MenuPage() {
     <div className="flex">
       <DashboardSidebar />
 
-      <main className="ml-64 p-6 w-full bg-gray-100 min-h-screen">
+      <main className="lg:ml-64 ml-0 p-4 lg:p-6 w-full bg-gray-100 min-h-screen">
         <DashboardNavbar title="Menu Management" subtitle="Manage your restaurant menu" />
 
         <div className="bg-white p-6 rounded-xl shadow-sm mt-6">
