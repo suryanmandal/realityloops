@@ -449,6 +449,7 @@ footer{background:var(--ink);color:var(--white);padding:80px 48px 40px;}
   header{padding:0;}
   .header-contact-bar{padding:7px 24px;}
   .header-main{padding:12px 24px;}
+  .verticals-intro,.carousel-header{flex-direction:column;align-items:flex-start;gap:20px;}
   nav{display:none;}
   .footer-top{grid-template-columns:1fr 1fr;gap:40px;}
   .faq-layout{grid-template-columns:1fr;gap:40px;}
@@ -457,6 +458,22 @@ footer{background:var(--ink);color:var(--white);padding:80px 48px 40px;}
   .carousel-section,.virtual360-section,.api-section,.dashboard-section,.services-intro{padding:60px 24px;}
   .verticals-intro,.models-section,.faq-section{padding:60px 24px;}
   .services-grid{margin:0 24px;}
+  .dash-body{grid-template-columns:1fr!important;grid-template-rows:auto!important;padding:16px!important;}
+  .dash-chart{grid-column:span 1!important;}
+  .dash-activity{grid-row:span 1!important;}
+}
+@media(max-width:600px){
+  .header-contact-bar{flex-direction:column;align-items:center;gap:8px;padding:8px 16px;text-align:center;}
+  .header-main{padding:12px 16px;}
+  .logo{font-size:1rem;}
+  .footer-top{grid-template-columns:1fr!important;gap:30px;}
+  .footer-bottom{flex-direction:column;gap:20px;text-align:center;}
+  .hero-actions{flex-direction:column;width:100%;gap:12px;}
+  .hero-actions a{width:100%;text-align:center;}
+  .carousel-item{min-width:100%!important;}
+  .waitlist-form{flex-direction:column;border:none!important;}
+  .waitlist-input{border:1px solid rgba(255,255,255,0.12)!important;border-radius:3px;margin-bottom:8px;width:100%;}
+  .waitlist-btn{border-radius:3px;width:100%;text-align:center;}
 }
 `;
 
@@ -474,6 +491,8 @@ function Cursor() {
 
 function Header() {
   const headerRef = useRef<HTMLElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
   useEffect(() => {
     const onScroll = () => {
       if (!headerRef.current) return;
@@ -492,12 +511,48 @@ function Header() {
       </div>
       <div className="header-main">
         <a href="#" className="logo">Reality<span>.</span>Loops</a>
-        <nav>
+        <nav className="hidden md:flex">
           <a href="#api">API</a>
           <a href="#services">Services</a>
           <a href="#about" className="nav-about">About Us</a>
         </nav>
+        {/* Mobile menu toggle button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="md:hidden p-2 text-gray-800 hover:bg-gray-100 rounded-lg cursor-pointer font-bold text-lg select-none focus:outline-none"
+          aria-label="Toggle navigation"
+        >
+          {isOpen ? "✕" : "☰"}
+        </button>
       </div>
+
+      {/* Mobile dropdown menu */}
+      {isOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 flex flex-col p-4 gap-4">
+          <a
+            href="#api"
+            onClick={() => setIsOpen(false)}
+            className="text-xs font-semibold text-gray-600 py-2 border-b border-gray-50 uppercase tracking-widest font-mono text-center"
+          >
+            API
+          </a>
+          <a
+            href="#services"
+            onClick={() => setIsOpen(false)}
+            className="text-xs font-semibold text-gray-600 py-2 border-b border-gray-50 uppercase tracking-widest font-mono text-center"
+          >
+            Services
+          </a>
+          <a
+            href="#about"
+            onClick={() => setIsOpen(false)}
+            className="nav-about text-center w-full py-2.5 rounded shadow-sm text-sm font-bold text-white select-none block"
+            style={{ textDecoration: 'none' }}
+          >
+            About Us
+          </a>
+        </div>
+      )}
     </header>
   );
 }
