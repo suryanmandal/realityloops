@@ -125,7 +125,7 @@ export default function RestaurantLogin() {
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 space-y-3">
               <button
                 type="submit"
                 disabled={loading}
@@ -140,15 +140,15 @@ export default function RestaurantLogin() {
                   </>
                 )}
               </button>
+
+              <Link
+                href="/services/dashboard/signup"
+                className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-slate-800 hover:border-slate-700 bg-slate-950/50 hover:bg-slate-950 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition-all"
+              >
+                Create Restaurant Account (Sign Up)
+              </Link>
             </div>
           </form>
-
-          <div className="mt-8 pt-6 border-t border-slate-800/80 text-center text-sm text-slate-400">
-            Don't have a restaurant account?{" "}
-            <Link href="/services/dashboard/signup" className="font-semibold text-purple-400 hover:text-purple-300 transition-colors">
-              Sign up here
-            </Link>
-          </div>
         </div>
       </div>
     </div>
