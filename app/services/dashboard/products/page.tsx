@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import DashboardSidebar from "@/app/components/services/DashboardSidebar";
 import DashboardNavbar from "@/app/components/services/DashboardNavbar";
 import { Plus, Edit3, Trash2, Save, X, ExternalLink } from "lucide-react";
+import FoodCameraCapture from "@/app/components/services/FoodCameraCapture";
 
 interface Category {
   _id: string;
@@ -76,6 +77,15 @@ export default function ProductsPage() {
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  // Custom 3D generation switcher state and refs
+  const arModelInputRef = useRef<HTMLInputElement>(null);
+  const [show3dMenu, setShow3dMenu] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraProductId, setCameraProductId] = useState<string>("new");
+  const [targetMode, setTargetMode] = useState<"standard" | "premium" | "premium_lite">("standard");
+  const [generatedPath, setGeneratedPath] = useState<string | null>(null);
+  const [arModelSource, setArModelSource] = useState<"local" | "standard" | "premium" | "premium_lite" | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -161,6 +171,8 @@ export default function ProductsPage() {
   const handleArModelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFormData(prev => ({ ...prev, arModel: e.target.files![0] }));
+      setGeneratedPath(null);
+      setArModelSource("local");
     }
   };
 
@@ -190,6 +202,8 @@ export default function ProductsPage() {
       }
       if (formData.arModel) {
         formDataToSend.append('arModel', formData.arModel);
+      } else if (generatedPath) {
+        formDataToSend.append('arModelPath', generatedPath);
       }
 
       let response;
@@ -247,6 +261,9 @@ export default function ProductsPage() {
       });
       setShowForm(false);
       setEditingId(null);
+      setGeneratedPath(null);
+      setArModelSource(null);
+      setShow3dMenu(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred while saving");
       console.error(err);
@@ -290,6 +307,9 @@ export default function ProductsPage() {
       });
       setEditingId(id);
       setShowForm(true);
+      setGeneratedPath(null);
+      setArModelSource(null);
+      setShow3dMenu(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error(err);
@@ -335,6 +355,9 @@ export default function ProductsPage() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
+    setGeneratedPath(null);
+    setArModelSource(null);
+    setShow3dMenu(false);
     setFormData({
       title: "",
       description: "",
@@ -397,6 +420,9 @@ export default function ProductsPage() {
                 });
                 setEditingId(null);
                 setShowForm(true);
+                setGeneratedPath(null);
+                setArModelSource(null);
+                setShow3dMenu(false);
               }}
               className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
             >
@@ -538,13 +564,110 @@ export default function ProductsPage() {
                   {is3dEnabled ? (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">3D Model (.glb) *</label>
+                      
+                      {/* Hidden native file input */}
                       <input
                         type="file"
                         accept=".glb"
+                        ref={arModelInputRef}
                         onChange={handleArModelChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="hidden"
                       />
-                      {editingId && (
+
+                      <div className="relative">
+                        {/* Dropdown Backdrop to close menu on click outside */}
+                        {show3dMenu && (
+                          <div 
+                            className="fixed inset-0 z-20 cursor-default" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShow3dMenu(false);
+                            }}
+                          />
+                        )}
+
+                        <div
+                          onClick={() => setShow3dMenu(!show3dMenu)}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 flex items-center focus-within:ring-2 focus-within:ring-blue-500 cursor-pointer relative z-30"
+                        >
+                          {/* Mock "Choose file" button */}
+                          <div className="bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 rounded px-2.5 py-1 text-xs font-semibold mr-3 transition-colors pointer-events-none select-none">
+                            Choose file
+                          </div>
+                          
+                          {/* File status text */}
+                          <span className="text-sm text-gray-500 truncate select-none">
+                            {formData.arModel 
+                              ? (arModelSource === "standard" 
+                                  ? `📸 ${formData.arModel.name} (Standard)` 
+                                  : `📂 ${formData.arModel.name}`)
+                              : arModelSource === "premium" && generatedPath
+                                ? "✨ AI Model Ready (Premium)"
+                                : arModelSource === "premium_lite" && generatedPath
+                                  ? "⚡ AI Model Ready (Premium lite)"
+                                  : "No file chosen"
+                            }
+                          </span>
+                        </div>
+
+                        {/* Dropdown Menu */}
+                        {show3dMenu && (
+                          <div className="absolute right-0 left-0 mt-1.5 z-30 bg-white border border-gray-200 rounded-lg shadow-lg py-1.5 text-sm">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                arModelInputRef.current?.click();
+                                setShow3dMenu(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 hover:bg-gray-100 flex items-center space-x-2 text-gray-700 cursor-pointer border-b border-gray-100"
+                            >
+                              <span>📂</span>
+                              <span className="font-semibold">Choose local file</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCameraOpen(true);
+                                setCameraProductId(editingId ? editingId : "new");
+                                setTargetMode("standard");
+                                setShow3dMenu(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 hover:bg-gray-100 flex items-center space-x-2 text-gray-700 cursor-pointer border-b border-gray-100"
+                            >
+                              <span>📸</span>
+                              <span className="font-semibold">Standard gen</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCameraOpen(true);
+                                setCameraProductId(editingId ? editingId : "new");
+                                setTargetMode("premium");
+                                setShow3dMenu(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 hover:bg-gray-100 flex items-center space-x-2 text-gray-700 cursor-pointer border-b border-gray-100"
+                            >
+                              <span>✨</span>
+                              <span className="font-semibold">Premium gen</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCameraOpen(true);
+                                setCameraProductId(editingId ? editingId : "new");
+                                setTargetMode("premium_lite");
+                                setShow3dMenu(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 hover:bg-gray-100 flex items-center space-x-2 text-gray-700 cursor-pointer"
+                            >
+                              <span>⚡</span>
+                              <span className="font-semibold">Premium lite</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {editingId && !formData.arModel && !generatedPath && (
                         <p className="text-xs text-gray-500 mt-1">Leave empty to keep current 3D model</p>
                       )}
                     </div>
@@ -706,6 +829,33 @@ export default function ProductsPage() {
           )}
         </div>
       </main>
+
+      {/* 3D Camera Capture Modal */}
+      <FoodCameraCapture
+        productId={cameraProductId}
+        isOpen={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        initialMode={targetMode}
+        onSuccess={(result, mode) => {
+          if (editingId) {
+            // Since it is an existing product, the backend has already updated it
+            // or we uploaded it. Refresh product list.
+            fetchData();
+          } else {
+            if (mode === "standard") {
+              // result is a File object containing the GLB
+              setFormData(prev => ({ ...prev, arModel: result }));
+              setGeneratedPath(null);
+              setArModelSource("standard");
+            } else {
+              // result is the arModelPath string
+              setGeneratedPath(result);
+              setFormData(prev => ({ ...prev, arModel: null }));
+              setArModelSource(mode === "premium" ? "premium" : "premium_lite");
+            }
+          }
+        }}
+      />
     </div>
   );
 }

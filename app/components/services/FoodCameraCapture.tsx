@@ -2,17 +2,19 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Camera, X, RefreshCw, Sparkles, CheckCircle2, AlertTriangle, Play, HelpCircle, Upload } from "lucide-react";
+import { client } from "@gradio/client";
 
 interface FoodCameraCaptureProps {
   productId: string;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (updatedProduct: any) => void;
+  onSuccess: (result: any, mode?: "standard" | "premium" | "premium_lite") => void;
+  initialMode?: "standard" | "premium" | "premium_lite";
 }
 
 type StepState = "idle" | "camera" | "preview" | "generating" | "success" | "error";
 
-export default function FoodCameraCapture({ productId, isOpen, onClose, onSuccess }: FoodCameraCaptureProps) {
+export default function FoodCameraCapture({ productId, isOpen, onClose, onSuccess, initialMode = "standard" }: FoodCameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,6 +26,8 @@ export default function FoodCameraCapture({ productId, isOpen, onClose, onSucces
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedMode, setSelectedMode] = useState<"standard" | "premium" | "premium_lite">(initialMode);
+  const [passcode, setPasscode] = useState("");
 
   // Clean up captured URL on change/unmount
   useEffect(() => {
@@ -43,8 +47,12 @@ export default function FoodCameraCapture({ productId, isOpen, onClose, onSucces
       setCapturedUrl(null);
       setProgress(0);
       setErrorMessage("");
+      setSelectedMode(initialMode);
+      setPasscode("");
+    } else {
+      setSelectedMode(initialMode);
     }
-  }, [isOpen]);
+  }, [isOpen, initialMode]);
 
   // Handle progress interval simulation during 3D generation
   useEffect(() => {
@@ -116,6 +124,8 @@ export default function FoodCameraCapture({ productId, isOpen, onClose, onSucces
       setState("preview");
       stopCamera();
     }
+    // Reset file input value so the user can select the same file again if they want
+    e.target.value = "";
   };
 
   const captureSnapshot = () => {
@@ -169,37 +179,163 @@ export default function FoodCameraCapture({ productId, isOpen, onClose, onSucces
         throw new Error("Restaurant authentication token not found. Please log in again.");
       }
 
-      // Build standard multipart request body
-      const formData = new FormData();
-      formData.append("image", capturedBlob, "captured_food.png");
+      if (selectedMode === "standard") {
+        setProgress(10);
+        setProgressText("🔗 Connecting to Hugging Face Space...");
+        
+        // Connect to public Gradio space
+        const app = await client("stabilityai/stable-fast-3d");
+        
+        setProgress(30);
+        setProgressText("📤 Submitting image to Stable Fast 3D model...");
+        
+        // Call run_button endpoint (#5)
+        const result = await app.predict(5, [
+          null,          // 13: button (null)
+          capturedBlob,  // 7: input image (Blob)
+          null,          // 2: state (null)
+          0.85,          // 9: foreground ratio (0.85)
+          "None",        // 10: remeshing ("None")
+          -1,            // 11: vertex count (-1)
+          1024           // 12: texture size (1024)
+        ]);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/restaurant/product/generate-3d/${productId}`, {
-        method: "POST",
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
+        setProgress(70);
+        setProgressText("📥 Reconstructing mesh and downloading model...");
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to generate 3D model. Please try again.");
+        // Find GLB item in the result data array
+        const glbItem = (result.data as any[]).find(
+          (item: any) => item && (item.is_file || (typeof item === "object" && item.url))
+        );
+
+        if (!glbItem || !glbItem.url) {
+          throw new Error("No 3D model file returned from Hugging Face.");
+        }
+
+        const glbResponse = await fetch(glbItem.url);
+        if (!glbResponse.ok) {
+          throw new Error("Failed to download model from Hugging Face CDN.");
+        }
+        const glbBlob = await glbResponse.blob();
+        const glbFile = new File([glbBlob], "food_model.glb", { type: "model/gltf-binary" });
+
+        // If it is a new/temporary product creation
+        if (productId === "new" || productId === "temp") {
+          setProgress(100);
+          setProgressText("✓ 3D Model generated successfully!");
+          setState("success");
+          setTimeout(() => {
+            onSuccess(glbFile, "standard");
+            onClose();
+          }, 1500);
+          return;
+        }
+
+        // Otherwise upload it directly to the backend
+        setProgress(85);
+        setProgressText("📤 Uploading generated model to restaurant server...");
+        
+        const uploadFormData = new FormData();
+        uploadFormData.append("arModel", glbFile, "food_model.glb");
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/restaurant/product/upload-3d/${productId}`, {
+          method: "POST",
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: uploadFormData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || "Failed to save the 3D model on the server.");
+        }
+
+        const resultData = await response.json();
+        setProgress(100);
+        setProgressText("✓ 3D Model uploaded and bound successfully!");
+        setState("success");
+        setTimeout(() => {
+          onSuccess(resultData.data.product, "standard");
+          onClose();
+        }, 1500);
+
+      } else if (selectedMode === "premium") {
+        // Premium Mode: Tripo3D API via Backend
+        setProgress(15);
+        setProgressText("🔑 Sending credentials and photo to backend...");
+
+        const formData = new FormData();
+        formData.append("image", capturedBlob, "captured_food.png");
+        formData.append("passcode", passcode);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/restaurant/product/generate-3d-premium/${productId}`, {
+          method: "POST",
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || "Premium 3D generation failed. Please try again.");
+        }
+
+        const resultData = await response.json();
+        setProgress(100);
+        setProgressText("✓ Premium 3D Model generated successfully!");
+        setState("success");
+        setTimeout(() => {
+          if (productId === "new" || productId === "temp") {
+            onSuccess(resultData.data.arModelPath, "premium");
+          } else {
+            onSuccess(resultData.data.product, "premium");
+          }
+          onClose();
+        }, 1500);
+      } else {
+        // Premium Lite Mode: Dedicated custom GPU server via Backend Proxy
+        setProgress(15);
+        setProgressText("⚡ Sending photo to dedicated GPU proxy...");
+
+        const formData = new FormData();
+        formData.append("image", capturedBlob, "captured_food.png");
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/restaurant/product/generate-3d-standard/${productId}`, {
+          method: "POST",
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || "Premium lite 3D generation failed. Please check if your custom GPU server is running.");
+        }
+
+        const resultData = await response.json();
+        setProgress(100);
+        setProgressText("✓ Premium Lite 3D Model generated successfully!");
+        setState("success");
+        setTimeout(() => {
+          if (productId === "new" || productId === "temp") {
+            onSuccess(resultData.data.arModelPath, "premium_lite");
+          } else {
+            onSuccess(resultData.data.product, "premium_lite");
+          }
+          onClose();
+        }, 1500);
       }
-
-      const result = await response.json();
-      setProgress(100);
-      setProgressText("✓ 3D Model generated successfully!");
-      setState("success");
-      
-      // Delay success callback slightly to let them enjoy the completed checkbox
-      setTimeout(() => {
-        onSuccess(result.data.product);
-        onClose();
-      }, 1500);
 
     } catch (err: any) {
       console.error("Image to 3D pipeline execution failed:", err);
-      setErrorMessage(err.message || "An unexpected error occurred during 3D generation.");
+      if (err) {
+        console.error("Detailed Error Message:", err.message);
+        console.error("Detailed Error Stack:", err.stack);
+      }
+      setErrorMessage(err?.message || "An unexpected error occurred during 3D generation.");
       setState("error");
     }
   };
@@ -230,8 +366,63 @@ export default function FoodCameraCapture({ productId, isOpen, onClose, onSucces
         </header>
 
         {/* Content Body */}
-        <div className="p-6 flex-1 overflow-y-auto flex flex-col justify-center min-h-[350px]">
+        <div className="p-6 flex-1 overflow-y-auto flex flex-col justify-start space-y-4 min-h-[350px]">
           
+          {/* Mode Switcher Tabs */}
+          {state !== "generating" && state !== "success" && (
+            <div className="bg-[#0b0f19] p-1 rounded-xl border border-[#1e293b]/80 flex w-full">
+              <button
+                type="button"
+                onClick={() => setSelectedMode("standard")}
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                  selectedMode === "standard"
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Standard AI (Free)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedMode("premium")}
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                  selectedMode === "premium"
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Premium (Passcode)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedMode("premium_lite")}
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                  selectedMode === "premium_lite"
+                    ? "bg-indigo-600 text-white shadow"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Premium lite (Colab)
+              </button>
+            </div>
+          )}
+
+          {/* Passcode prompt if premium selected */}
+          {state !== "generating" && state !== "success" && selectedMode === "premium" && (
+            <div className="w-full space-y-1 animate-fadeIn">
+              <label className="block text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                Premium Access Code
+              </label>
+              <input
+                type="password"
+                placeholder="Enter passcode to unlock Tripo3D API"
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-[#0b0f19] border border-[#1e293b] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors"
+              />
+            </div>
+          )}
+
           {/* Main State Canvas */}
           <div className="relative aspect-square w-full max-w-[320px] mx-auto bg-[#0b0f19] border border-[#1e293b]/80 rounded-2xl overflow-hidden flex items-center justify-center group">
             
@@ -392,15 +583,29 @@ export default function FoodCameraCapture({ productId, isOpen, onClose, onSucces
             </>
           )}
 
-          {/* Try again from error state */}
+          {/* Try again/Reset options from error state */}
           {state === "error" && (
-            <button
-              onClick={startCamera}
-              className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center space-x-1.5 cursor-pointer"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Try Again</span>
-            </button>
+            <div className="flex w-full gap-4">
+              <button
+                onClick={() => {
+                  setState("idle");
+                  setCapturedBlob(null);
+                  setCapturedUrl(null);
+                }}
+                className="flex-1 bg-[#1e293b] hover:bg-[#1e293b]/80 border border-[#1e293b] text-white font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center space-x-1.5 cursor-pointer"
+              >
+                <span>Upload/Take New Photo</span>
+              </button>
+              {capturedBlob && (
+                <button
+                  onClick={handleGenerateModel}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-500/10 border border-emerald-500/25 cursor-pointer"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Retry Generation</span>
+                </button>
+              )}
+            </div>
           )}
 
           {/* Generator executing loading state */}

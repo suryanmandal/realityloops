@@ -102,6 +102,12 @@ export default function AdminDashboard() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // System Settings States
+  const [settingsPasscode, setSettingsPasscode] = useState("");
+  const [settingsApiKey, setSettingsApiKey] = useState("");
+  const [settingsCustomGpuUrl, setSettingsCustomGpuUrl] = useState("");
+  const [savingSettings, setSavingSettings] = useState(false);
+
   const handleLogout = () => {
     logout();
     router.push('/admin/login');
@@ -155,6 +161,17 @@ export default function AdminDashboard() {
       if (productsRes.ok) {
         const prodData = await productsRes.json();
         setProducts(prodData.data.products || []);
+      }
+
+      // Fetch Global 3D AI Engine Settings
+      const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/admin/settings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (settingsRes.ok) {
+        const settingsResult = await settingsRes.json();
+        setSettingsPasscode(settingsResult.data.tripo_passcode || "premium3d");
+        setSettingsApiKey(settingsResult.data.tripo_api_key || "");
+        setSettingsCustomGpuUrl(settingsResult.data.custom_gpu_url || "");
       }
 
     } catch (error) {
@@ -264,6 +281,38 @@ export default function AdminDashboard() {
       showAlert("error", err.message || "Failed to upload and bind model file.");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    setAlert(null);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/admin/settings`, {
+        method: "PUT",
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          tripo_passcode: settingsPasscode,
+          tripo_api_key: settingsApiKey,
+          custom_gpu_url: settingsCustomGpuUrl
+        })
+      });
+
+      if (response.ok) {
+        showAlert("success", "Successfully updated global 3D AI Engine settings!");
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update settings");
+      }
+    } catch (err: any) {
+      showAlert("error", err.message || "Failed to update system settings.");
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -532,45 +581,120 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Graphic Chart representation */}
+              {/* 3D AI Engine Configuration */}
               <div className="bg-[#131926]/40 border border-[#1e293b] rounded-3xl p-6 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-lg font-black text-white">Operational Signup Distribution</h3>
-                  <p className="text-xs text-gray-500 mb-6">Timeline overview of newly onboarded restaurants over the past 5 months</p>
+                  <h3 className="text-lg font-black text-white">3D AI Engine Configuration</h3>
+                  <p className="text-xs text-gray-500 mb-6">Configure global passcodes and Tripo3D API credentials for premium reconstruction pipelines</p>
+                  
+                  <form onSubmit={handleSaveSettings} className="space-y-4">
+                    {/* Passcode Input */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Premium Mode Passcode</label>
+                      <input
+                        type="text"
+                        value={settingsPasscode}
+                        onChange={(e) => setSettingsPasscode(e.target.value)}
+                        placeholder="e.g. premium3d"
+                        required
+                        className="w-full bg-[#0f172a] border border-[#1e293b] rounded-xl px-4 py-3 text-sm text-gray-300 font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                      <p className="text-[10px] text-gray-500 mt-1">
+                        Required by restaurants to unlock high-fidelity Tripo3D AI reconstruction.
+                      </p>
+                    </div>
 
-                  <div className="h-44 w-full flex items-end justify-between px-6 pt-4 border-b border-[#1e293b] pb-2">
-                    {/* Render a custom, lightweight SVG / CSS graph grid */}
-                    {(stats?.monthlySignups || [
-                      { month: "Jan", count: 2 },
-                      { month: "Feb", count: 4 },
-                      { month: "Mar", count: 5 },
-                      { month: "Apr", count: 7 },
-                      { month: "May", count: 8 }
-                    ]).map((entry) => {
-                      const maxVal = Math.max(...(stats?.monthlySignups.map(s => s.count) || [8]));
-                      const heightPercent = maxVal > 0 ? (entry.count / maxVal) * 80 : 10;
-                      return (
-                        <div key={entry.month} className="flex flex-col items-center w-12 group">
-                          <div className="text-[10px] font-black text-emerald-400 mb-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {entry.count}
-                          </div>
-                          <div 
-                            style={{ height: `${heightPercent}%` }}
-                            className="w-8 bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-500/20 hover:border-emerald-500/40 rounded-t-lg transition-all duration-300 relative"
-                          />
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-2">{entry.month}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-4 flex items-center justify-between text-xs text-gray-500 font-semibold px-2">
-                    <span>Database Status: Connected</span>
-                    <span>Collection Sync: Live</span>
-                  </div>
+                    {/* API Key Input */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Tripo3D API Secret Key</label>
+                      <input
+                        type="password"
+                        value={settingsApiKey}
+                        onChange={(e) => setSettingsApiKey(e.target.value)}
+                        placeholder="tripo_api_key_..."
+                        className="w-full bg-[#0f172a] border border-[#1e293b] rounded-xl px-4 py-3 text-sm text-gray-300 font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                      <p className="text-[10px] text-gray-500 mt-1">
+                        Stored securely in backend. Masked as <code className="text-emerald-400">********</code>. Leave empty or unchanged to keep current key.
+                      </p>
+                    </div>
+
+                    {/* Custom GPU Server URL Input */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Custom GPU Server URL (Optional)</label>
+                      <input
+                        type="text"
+                        value={settingsCustomGpuUrl}
+                        onChange={(e) => setSettingsCustomGpuUrl(e.target.value)}
+                        placeholder="https://xxxx.ngrok-free.app"
+                        className="w-full bg-[#0f172a] border border-[#1e293b] rounded-xl px-4 py-3 text-sm text-gray-300 font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                      <p className="text-[10px] text-gray-500 mt-1">
+                        Private Google Colab GPU server URL. Used by <code className="text-emerald-400">Premium lite</code> mode.
+                      </p>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={savingSettings}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/10 border border-emerald-500/20 cursor-pointer"
+                    >
+                      {savingSettings ? (
+                        <>
+                          <div className="w-4 h-4 border-t-2 border-white border-solid rounded-full animate-spin"></div>
+                          <span>Saving Configurations...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Update Configuration</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
                 </div>
               </div>
 
             </section>
+
+            {/* Graphic Chart representation */}
+            <section className="bg-[#131926]/40 border border-[#1e293b] rounded-3xl p-6">
+              <div>
+                <h3 className="text-lg font-black text-white">Operational Signup Distribution</h3>
+                <p className="text-xs text-gray-500 mb-6">Timeline overview of newly onboarded restaurants over the past 5 months</p>
+
+                <div className="h-44 w-full flex items-end justify-between px-6 pt-4 border-b border-[#1e293b] pb-2 max-w-2xl mx-auto">
+                  {/* Render a custom, lightweight SVG / CSS graph grid */}
+                  {(stats?.monthlySignups || [
+                    { month: "Jan", count: 2 },
+                    { month: "Feb", count: 4 },
+                    { month: "Mar", count: 5 },
+                    { month: "Apr", count: 7 },
+                    { month: "May", count: 8 }
+                  ]).map((entry) => {
+                    const maxVal = Math.max(...(stats?.monthlySignups?.map(s => s.count) || [8]));
+                    const heightPercent = maxVal > 0 ? (entry.count / maxVal) * 80 : 10;
+                    return (
+                      <div key={entry.month} className="flex flex-col items-center w-12 group">
+                        <div className="text-[10px] font-black text-emerald-400 mb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {entry.count}
+                        </div>
+                        <div 
+                          style={{ height: `${heightPercent}%` }}
+                          className="w-8 bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-500/20 hover:border-emerald-500/40 rounded-t-lg transition-all duration-300 relative"
+                        />
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-2">{entry.month}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 flex items-center justify-between text-xs text-gray-500 font-semibold px-2 max-w-2xl mx-auto">
+                  <span>Database Status: Connected</span>
+                  <span>Collection Sync: Live</span>
+                </div>
+              </div>
+            </section>
+
 
             {/* Sandbox Model Viewer Sandbox Grid */}
             <section className="bg-[#131926]/40 border border-[#1e293b] rounded-3xl p-6">
