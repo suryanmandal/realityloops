@@ -142,6 +142,13 @@ export default function RestaurantLogin() {
               </button>
             </div>
           </form>
+
+          <div className="mt-8 pt-6 border-t border-slate-800/80 text-center text-sm text-slate-400">
+            Don't have a restaurant account?{" "}
+            <Link href="/services/dashboard/signup" className="font-semibold text-purple-400 hover:text-purple-300 transition-colors">
+              Sign up here
+            </Link>
+          </div>
         </div>
       </div>
     </div>
