@@ -20,15 +20,27 @@ import Footer from "../../../components/Footer";
 
 const getAbsoluteGlbUrl = (url: string) => {
   if (!url) return "";
-  if (typeof window !== "undefined") {
-    if (url.includes("localhost:3000")) {
-      return url.replace("localhost", window.location.hostname);
-    }
-    if (url.startsWith("/uploads")) {
-      return `${window.location.protocol}//${window.location.hostname}:3000${url}`;
-    }
+  
+  const apiBase = process.env.NEXT_PUBLIC_API || "";
+  let resolvedUrl = url;
+
+  // 1. If it's a relative path, prepend the API base URL
+  if (resolvedUrl.startsWith("/uploads")) {
+    resolvedUrl = `${apiBase}${resolvedUrl}`;
   }
-  return url;
+  
+  // 2. If it points to localhost:3000 but the API is hosted elsewhere (production),
+  // replace localhost with the API base URL
+  if (resolvedUrl.includes("localhost:3000") && apiBase && !apiBase.includes("localhost:3000")) {
+    resolvedUrl = resolvedUrl.replace(/https?:\/\/localhost:3000/, apiBase);
+  }
+
+  // 3. Force HTTPS if the current page is loaded over HTTPS to prevent Mixed Content blocking
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    resolvedUrl = resolvedUrl.replace("http://", "https://");
+  }
+
+  return resolvedUrl;
 };
 
 interface ForgeModelItem {
